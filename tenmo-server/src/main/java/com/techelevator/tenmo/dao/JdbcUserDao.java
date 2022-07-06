@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import javax.sql.RowSet;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,6 +78,20 @@ public class JdbcUserDao implements UserDao {
         }
 
         return true;
+    }
+
+    //OUR STUFF
+
+    public int viewCurrentBalance(int accountId){
+        int output= 0;
+        String sql = "SELECT balance FROM account WHERE account_id = ?;";
+        try{
+            SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, accountId);
+            output = rowSet.getInt("balance");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return output;
     }
 
     private User mapRowToUser(SqlRowSet rs) {
