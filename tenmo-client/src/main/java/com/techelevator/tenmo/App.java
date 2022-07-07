@@ -1,17 +1,16 @@
 package com.techelevator.tenmo;
 
 import com.techelevator.tenmo.model.AuthenticatedUser;
+import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.UserCredentials;
 import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.ConsoleService;
-import io.cucumber.core.internal.gherkin.Token;
-import org.springframework.core.ParameterizedTypeReference;
+import com.techelevator.util.BasicLogger;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 public class App {
 
@@ -21,7 +20,7 @@ public class App {
     private final AuthenticationService authenticationService = new AuthenticationService(API_BASE_URL);
 
     private AuthenticatedUser currentUser;
-    private RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplate();
 
     public static void main(String[] args) {
         App app = new App();
@@ -94,14 +93,8 @@ public class App {
     }
 
 	private void viewCurrentBalance() {
-        /*HttpHeaders userHeader = new HttpHeaders();
-        userHeader.setContentType(MediaType.APPLICATION_JSON);
-        userHeader.setBearerAuth(currentUser.getToken());
-
-        createAuthEntity(currentUser);*/
-
-        ResponseEntity<BigDecimal> response = restTemplate.exchange(API_BASE_URL + "balance/"+ currentUser.getUser().getId(), HttpMethod.GET, new HttpEntity<>(createAuthEntity(currentUser)), BigDecimal.class);
-
+        ResponseEntity<BigDecimal> response = restTemplate.exchange(API_BASE_URL + "balance/"+ currentUser.getUser().getId(),
+                HttpMethod.GET, new HttpEntity<>(createAuthEntity(currentUser)), BigDecimal.class);
         System.out.println("Your current balance is: $"+response.getBody());
 	}
 
@@ -116,8 +109,63 @@ public class App {
 	}
 
     private void sendBucks() {
+        User[] users = null;
+        long recipientId = -1;
+        BigDecimal sendAmount = new BigDecimal("0.00");
+        System.out.println(currentUser.getUser().getId());
 
+        try {
+            ResponseEntity<User[]> response = restTemplate.exchange(API_BASE_URL + "transfer/"+currentUser.getUser().getId(),
+                    HttpMethod.GET, new HttpEntity<>(createAuthEntity(currentUser)),User[].class);
+            users = response.getBody();
+        } catch (Exception e) {
+            consoleService.printErrorMessage();
+        }
+
+        listUsers(users);
+        recipientId = promptUserForId(users);
+        while (sendAmount.compareTo(new BigDecimal("0.00"))<=0) {
+            sendAmount = consoleService.promptForBigDecimal("Enter the amount you want to send in decimal notation");
+        }
+        long senderId = currentUser.getUser().getId();
+
+        Transfer transfer = new Transfer(currentUser.getUser(),recipientId, sendAmount, 2, 2);
+
+        HttpEntity<Transfer> entity = new HttpEntity<>(transfer,createAuthEntity(currentUser));
+        try{
+            ResponseEntity<Transfer> response = restTemplate.exchange(API_BASE_URL + "transfer/"+currentUser.getUser().getId(),
+                   HttpMethod.POST, entity, Transfer.class);
+        }catch (Exception e){
+            consoleService.printErrorMessage();
+            BasicLogger.log(e.getMessage());
+        }
     }
+
+    public void listUsers(User[] users){
+        for (int i = 0; i < users.length; i++){
+            int formatter = i+1;
+            System.out.println(formatter + ") " + users[i].getId() + " : " + users[i].getUsername());
+        }
+    }
+
+    public int promptUserForId(User[] users){
+        boolean isValid = false;
+        int recipientId = -1;
+        while (!isValid) {
+            recipientId = consoleService.promptForInt("Choose the recipient by their ID");
+            for (User user : users) {
+                if (recipientId == user.getId()) {
+                    isValid = true;
+                    break;
+                }
+            }
+            if (!isValid) {
+                System.out.println("That does not correspond to a user");
+            }
+        }
+        return recipientId;
+    }
+
 
 	private void requestBucks() {
 		// TODO Auto-generated method stub
