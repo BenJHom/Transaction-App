@@ -5,9 +5,13 @@ import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.UserCredentials;
 import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.ConsoleService;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.ResponseEntity;
+import io.cucumber.core.internal.gherkin.Token;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 public class App {
 
@@ -90,10 +94,15 @@ public class App {
     }
 
 	private void viewCurrentBalance() {
-        HttpEntity<String> entity = currentUser.getToken();
+        /*HttpHeaders userHeader = new HttpHeaders();
+        userHeader.setContentType(MediaType.APPLICATION_JSON);
+        userHeader.setBearerAuth(currentUser.getToken());
 
+        createAuthEntity(currentUser);*/
 
-        ResponseEntity<User> response = restTemplate.exchange(API_BASE_URL + "balance", )
+        ResponseEntity<BigDecimal> response = restTemplate.exchange(API_BASE_URL + "balance/"+ currentUser.getUser().getId(), HttpMethod.GET, new HttpEntity<>(createAuthEntity(currentUser)), BigDecimal.class);
+
+        System.out.println("Your current balance is: $"+response.getBody());
 	}
 
 	private void viewTransferHistory() {
@@ -106,14 +115,20 @@ public class App {
 		
 	}
 
-	private void sendBucks() {
-		// TODO Auto-generated method stub
-		
-	}
+    private void sendBucks() {
+
+    }
 
 	private void requestBucks() {
 		// TODO Auto-generated method stub
 		
 	}
+
+    private HttpHeaders createAuthEntity(AuthenticatedUser user) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(user.getToken());
+        return headers;
+    }
 
 }
