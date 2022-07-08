@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public class Transfer {
     private User sender;
     private long receiverId;
+    private String receiverUsername;
     private BigDecimal amount;
     private int status;
     private int type;
@@ -92,5 +93,13 @@ public class Transfer {
 
     public void setTransferId(int transferId) {
         this.transferId = transferId;
+    }
+
+    public String getReceiverUsername() {
+        return receiverUsername;
+    }
+
+    public void setReceiverUsername(String receiverUsername) {
+        this.receiverUsername = receiverUsername;
     }
 }

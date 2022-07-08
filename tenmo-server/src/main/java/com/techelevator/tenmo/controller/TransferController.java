@@ -9,6 +9,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @PreAuthorize("isAuthenticated()")
 @RestController
@@ -28,10 +30,16 @@ public class TransferController {
 
     @RequestMapping(path = "/transfer/{id}", method = RequestMethod.GET)
     public User[] getUsersForTransfer(@PathVariable long id){
-        User[] users = new User[userDao.findAll().size()];
-        for (int i = 0; i < userDao.findAll().size(); i++){
-            if(!(users[i].getId() == id)) {
-                users[i] = userDao.findAll().get(i);
+        List<User> userList = userDao.findAll();
+        boolean foundUser = false;
+        User[] users = new User[userList.size()-1];
+        for (int i = 0; i < userList.size(); i++){
+            if((userList.get(i).getId() == id)) {
+                foundUser = true;
+            }else if (foundUser){
+                users[i-1] = userList.get(i);
+            }else{
+                users[i] = userList.get(i);
             }
         }
         return users;
@@ -44,12 +52,23 @@ public class TransferController {
         int accountTo = transferDao.getAccountId(transfer.getReceiverId());
         transfer.setAccountFrom(accountFrom);
         transfer.setAccountTo(accountTo);
-
-        transfer = transferDao.createTransfer(transfer);
+        transfer.setType(2);
 
         transferDao.doTransfer(transfer);
 
+        transfer = transferDao.createTransfer(transfer);
+
         return transfer;
+    }
+
+    @RequestMapping(path = "/history/{id}", method = RequestMethod.GET)
+    public Transfer[] listTransfers(@PathVariable int id){
+        List<Transfer> transferList = transferDao.listTransfers(id);
+        Transfer[] transferArray = new Transfer[transferList.size()];
+        for (int i = 0; i < transferList.size() ; i++){
+            transferArray[i] = transferList.get(i);
+        }
+        return transferArray;
     }
 }
 
