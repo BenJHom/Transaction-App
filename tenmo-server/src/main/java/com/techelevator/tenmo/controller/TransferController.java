@@ -54,11 +54,21 @@ public class TransferController {
         transfer.setAccountTo(accountTo);
         transfer.setType(2);
 
-        transfer = transferDao.createTransfer(transfer);
-
         transferDao.doTransfer(transfer);
 
+        transfer = transferDao.createTransfer(transfer);
+
         return transfer;
+    }
+
+    @RequestMapping(path = "/history/{id}", method = RequestMethod.GET)
+    public Transfer[] listTransfers(@PathVariable int id){
+        List<Transfer> transferList = transferDao.listTransfers(id);
+        Transfer[] transferArray = new Transfer[transferList.size()];
+        for (int i = 0; i < transferList.size() ; i++){
+            transferArray[i] = transferList.get(i);
+        }
+        return transferArray;
     }
 }
 

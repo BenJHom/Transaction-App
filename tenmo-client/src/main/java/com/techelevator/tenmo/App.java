@@ -99,8 +99,19 @@ public class App {
 	}
 
 	private void viewTransferHistory() {
-		// TODO Auto-generated method stub
-		
+		Transfer[] transfers;
+
+        try {
+            ResponseEntity<Transfer[]> response = restTemplate.exchange(API_BASE_URL + "history/" + currentUser.getUser().getId(),
+                    HttpMethod.GET, new HttpEntity<>(createAuthEntity(currentUser)), Transfer[].class);
+            transfers = response.getBody();
+            for (Transfer transfer: transfers){
+                System.out.println("Transfer Id: "+transfer.getTransferId() + "   From: " + transfer.getSender().getUsername() + "   To: " + transfer.getReceiverUsername() + "   Amount: " + transfer.getAmount());
+            }
+        }catch(Exception e){
+            consoleService.printErrorMessage();
+        }
+
 	}
 
 	private void viewPendingRequests() {

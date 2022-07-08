@@ -6,6 +6,8 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class JdbcTransferDao implements TransferDao{
@@ -35,7 +37,7 @@ public class JdbcTransferDao implements TransferDao{
                 "VALUES (?,?,?,?,?) RETURNING transfer_id;";
         try{
             SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql,
-                    transfer.getType(), transfer.getStatus(), transfer.getAccountTo(), transfer.getAccountFrom(), transfer.getAmount());
+                    transfer.getType(), transfer.getStatus(), transfer.getAccountFrom(), transfer.getAccountTo(), transfer.getAmount());
             if (rowSet.next()){
                 transfer = mapRowToTransfer(rowSet);
             }
@@ -46,10 +48,27 @@ public class JdbcTransferDao implements TransferDao{
     }
 
 
+    public List<Transfer> listTransfers(long userId){
+        List<Transfer> transfers = new ArrayList<>();
+        int userAccount = getAccountId(userId);
 
-    // NEEEDS IMPLEMENT
-    public Transfer[] getTransfers(){
-        return new Transfer[0];
+        String sqlSender = "SELECT transfer_id, account_to, account_from, transfer_type_id, transfer_status_id, t1.username as from_user, t2.username to_user, amount FROM transfer " +
+                "join account as a1 on account_to = a1.account_id\n" +
+                "join account as a2 on account_from = a2.account_id \n" +
+                "join tenmo_user as t1 on a1.user_id = t1.user_id \n" +
+                "join tenmo_user as t2 on a2.user_id = t2.user_id " +
+        "WHERE a1.account_id = ? OR a2.account_id = ?;";
+
+        try{
+            SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sqlSender, userAccount, userAccount);
+            while (rowSet.next()){
+                transfers.add(mapRowToTransfer(rowSet));
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return transfers;
     }
 
     public boolean doTransfer(Transfer transfer){
@@ -103,6 +122,8 @@ public class JdbcTransferDao implements TransferDao{
         transfer.setAccountFrom(rowSet.getInt("account_from"));
         transfer.setAmount(rowSet.getBigDecimal("amount"));
         transfer.setTransferId(rowSet.getInt("transfer_id"));
+        transfer.setReceiverUsername(rowSet.getString("to_user"));
+        transfer.getSender().setUsername(rowSet.getString("from_user"));
 
         return transfer;
     }
