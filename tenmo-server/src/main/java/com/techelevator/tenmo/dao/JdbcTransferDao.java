@@ -55,14 +55,19 @@ public class JdbcTransferDao implements TransferDao{
     public boolean doTransfer(Transfer transfer){
         BigDecimal amount = transfer.getAmount();
         if (amount.compareTo(new BigDecimal("0.00"))<=0){
+            transfer.setStatus(3);
             return false;
         }
 
         try {
             String sqlSenderBalance = "SELECT balance FROM account WHERE account_id = ?";
             SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sqlSenderBalance, transfer.getAccountFrom());
-            BigDecimal senderBalance = rowSet.getBigDecimal("balance");
+            BigDecimal senderBalance = new BigDecimal("0.00");
+            if (rowSet.next()) {
+                senderBalance = rowSet.getBigDecimal("balance");
+            }
             if (senderBalance.subtract(amount).compareTo(new BigDecimal("0.00")) < 0) {
+                transfer.setStatus(3);
                 return false;
             }
         }catch(Exception e){
@@ -90,6 +95,8 @@ public class JdbcTransferDao implements TransferDao{
 
     private Transfer mapRowToTransfer(SqlRowSet rowSet){
         Transfer transfer = new Transfer();
+
+        //Causes invalid column name
         transfer.setType(rowSet.getInt("transfer_type_id"));
         transfer.setStatus(rowSet.getInt("transfer_status_id"));
         transfer.setAccountTo(rowSet.getInt("account_to"));

@@ -112,7 +112,6 @@ public class App {
         User[] users = null;
         long recipientId = -1;
         BigDecimal sendAmount = new BigDecimal("0.00");
-        System.out.println(currentUser.getUser().getId());
 
         try {
             ResponseEntity<User[]> response = restTemplate.exchange(API_BASE_URL + "transfer/"+currentUser.getUser().getId(),
@@ -125,7 +124,7 @@ public class App {
         listUsers(users);
         recipientId = promptUserForId(users);
         while (sendAmount.compareTo(new BigDecimal("0.00"))<=0) {
-            sendAmount = consoleService.promptForBigDecimal("Enter the amount you want to send in decimal notation");
+            sendAmount = consoleService.promptForBigDecimal("Enter the amount you want to send in decimal notation: ");
         }
         long senderId = currentUser.getUser().getId();
 
@@ -152,7 +151,7 @@ public class App {
         boolean isValid = false;
         int recipientId = -1;
         while (!isValid) {
-            recipientId = consoleService.promptForInt("Choose the recipient by their ID");
+            recipientId = consoleService.promptForInt("Choose the recipient by their ID: ");
             for (User user : users) {
                 if (recipientId == user.getId()) {
                     isValid = true;
