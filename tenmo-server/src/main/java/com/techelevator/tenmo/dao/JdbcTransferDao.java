@@ -1,6 +1,7 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Transfer;
+import com.techelevator.tenmo.model.User;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
@@ -39,7 +40,7 @@ public class JdbcTransferDao implements TransferDao{
             SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql,
                     transfer.getType(), transfer.getStatus(), transfer.getAccountFrom(), transfer.getAccountTo(), transfer.getAmount());
             if (rowSet.next()){
-                transfer = mapRowToTransfer(rowSet);
+                transfer.setTransferId(rowSet.getInt("transfer_id"));
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -114,8 +115,8 @@ public class JdbcTransferDao implements TransferDao{
 
     private Transfer mapRowToTransfer(SqlRowSet rowSet){
         Transfer transfer = new Transfer();
+        transfer.setSender(new User());
 
-        //Causes invalid column name
         transfer.setType(rowSet.getInt("transfer_type_id"));
         transfer.setStatus(rowSet.getInt("transfer_status_id"));
         transfer.setAccountTo(rowSet.getInt("account_to"));

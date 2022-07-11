@@ -106,7 +106,30 @@ public class App {
                     HttpMethod.GET, new HttpEntity<>(createAuthEntity(currentUser)), Transfer[].class);
             transfers = response.getBody();
             for (Transfer transfer: transfers){
-                System.out.println("Transfer Id: "+transfer.getTransferId() + "   From: " + transfer.getSender().getUsername() + "   To: " + transfer.getReceiverUsername() + "   Amount: " + transfer.getAmount());
+                System.out.println("Transfer Id: "+transfer.getTransferId() + "      From: " + transfer.getSender().getUsername() + "      To: " + transfer.getReceiverUsername() + "      Amount: " + transfer.getAmount());
+            }
+
+            int choice = consoleService.promptForInt("Choose a transfer by ID: ");
+            for (Transfer transfer: transfers){
+                if (transfer.getTransferId() == choice){
+                    String type = "";
+                    String status = "";
+                    if(transfer.getType() == 2){
+                        type = "Send";
+                    }else if (transfer.getType() == 1){
+                        type = "Request";
+                    }
+                    if(transfer.getStatus() == 2){
+                        status = "Approved";
+                    }else if (transfer.getStatus() == 3){
+                        status = "Rejected";
+                    }else {
+                        status = "Pending";
+                    }
+
+                    System.out.println("\n Id: " + transfer.getTransferId() + "\n From: " + transfer.getSender().getUsername()
+                    + "\n To: " + transfer.getReceiverUsername() + "\n Type: " + type + "\n Status: " + status + "\n Amount: " + transfer.getAmount());
+                }
             }
         }catch(Exception e){
             consoleService.printErrorMessage();
@@ -123,6 +146,7 @@ public class App {
         User[] users = null;
         long recipientId = -1;
         BigDecimal sendAmount = new BigDecimal("0.00");
+        Transfer returnedTransfer = new Transfer();
 
         try {
             ResponseEntity<User[]> response = restTemplate.exchange(API_BASE_URL + "transfer/"+currentUser.getUser().getId(),
@@ -145,6 +169,10 @@ public class App {
         try{
             ResponseEntity<Transfer> response = restTemplate.exchange(API_BASE_URL + "transfer/"+currentUser.getUser().getId(),
                    HttpMethod.POST, entity, Transfer.class);
+            returnedTransfer = response.getBody();
+            if (returnedTransfer.getStatus() == 3){
+                System.out.println("Transaction failed, you do not have enough funds.");
+            }
         }catch (Exception e){
             consoleService.printErrorMessage();
             BasicLogger.log(e.getMessage());
